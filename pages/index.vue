@@ -3,13 +3,13 @@
     half.x: {{half.x}}
     half.y: {{half.y}}
     <v-btn @click="add_node">ノード追加</v-btn>
+    <v-btn @click="removeParentsOfOneChild">クリア</v-btn>
     <div id="cy"></div>
   </row>
 </template>
 
 <script>
 import cytoscape from 'cytoscape';
-import { resolve } from 'path';
 
 export default {
   name: 'IndexPage',
@@ -19,22 +19,46 @@ export default {
       node1: null,
       node2: null,
       half: {x:0, y:0},
-      number: 1,
+      number: 2,
+      id: 'b',
+      removeEmptyParents : false, //demoサイトから引用
     }
   },
   methods: {
     //気分転換に追加
     add_node() {
       let vm = this;
+      //console.log(vm.autoId()); //autoId()は動作確認済み
+      let id = vm.autoId();
       this.cy.add([
         {
-          group: 'nodes',
-          date: {
-            id: vm.number,
-          }
+          group : 'nodes',
+          data : {
+            id : id, 
+          },
+          // position : {
+          //   x : 150 + Math.cos(this.theta)*this.k,
+          //   y : 150 + Math.sin(this.theta)*this.k,
+          // },
         }
-      ])
-      vm.number += 1;
+      ]);
+    },
+
+    autoId() {
+      const alf = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+      //console.log(alf.length);
+      if (this.number<26) {
+        let len = (this.id).length;
+        let new_id = this.id.slice(0, len-1);
+        new_id += alf[this.number];
+        this.id = new_id;
+        this.number += 1;
+      }
+      else {
+        this.number = 1;
+        this.id += 'a';
+      }
+      return this.id;
     },
 
     draw_circle(){
@@ -86,7 +110,7 @@ export default {
           {
             selector: 'node',
             style: {
-              'background-color': '#666',
+              
               'label': 'data(id)'
             }
           },
@@ -101,6 +125,33 @@ export default {
               'curve-style': 'bezier',
               'arrow-scale': '3',
             }
+          },
+          {
+            selector: 'node:parent',
+            style: {
+              'label': ''
+            }
+          },
+          {
+            selector: '.cdnd-grabbed-node',
+            style: {
+              'background-color': 'red'
+            }
+          },
+
+          {
+            selector: '.cdnd-drop-sibling',
+            style: {
+              'background-color': 'red'
+            }
+          },
+
+          {
+            selector: '.cdnd-drop-target',
+            style: {
+              'border-color': 'red',
+              'border-style': 'dashed'
+            }
           }
         ],
 
@@ -109,12 +160,47 @@ export default {
           rows: 1
         }
       })
-    }
+    },
+    //demoサイトからそのまま引用
+    isParentOfOneChild(node) {
+      return node.isParent() && node.children().length === 1;
+    },
+    removeParent(parent) {
+      parent.children().move({parent:null});
+      parent.remove();
+    },
+    removeParentsOfOneChild() {
+      this.cy.nodes().filter(this.isParentOfOneChild).forEach(this.removeParent);
+    },
   },
   mounted() {
+    let vm = this;
+    const options = {
+      grabbedNode: node => true, // filter function to specify which nodes are valid to grab and drop into other nodes
+      dropTarget: (dropTarget, grabbedNode) => true, // filter function to specify which parent nodes are valid drop targets
+      dropSibling: (dropSibling, grabbedNode) => true, // filter function to specify which orphan nodes are valid drop siblings
+      newParentNode: (grabbedNode, dropSibling) => ({}), // specifies element json for parent nodes added by dropping an orphan node on another orphan (a drop sibling). You can chose to return the dropSibling in which case it becomes the parent node and will be preserved after all its children are removed.
+      boundingBoxOptions: { // same as https://js.cytoscape.org/#eles.boundingBox, used when calculating if one node is dragged over another
+        includeOverlays: false,
+        includeLabels: true
+      },
+      overThreshold: 10, // make dragging over a drop target easier by expanding the hit area by this amount on all sides
+      outThreshold: 10 // make dragging out of a drop target a bit harder by expanding the hit area by this amount on all sides
+    };
     this.init();
     this.tap_edge();
     this.cy.fit();
+    this.cy.compoundDragAndDrop(options);
+    this.cy.on('remove', (event)=>{
+      if (vm.removeEmptyParents ) {
+        vm.removeParentsOfOneChild();
+      }
+    });
+    this.cy.on('cdndout', (event, dropTarget) => {
+      if( vm.removeEmptyParents && vm.isParentOfOneChild(dropTarget) ){
+        vm.removeParent(dropTarget);
+      }
+    })
   }
 }
 </script>
