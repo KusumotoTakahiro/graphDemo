@@ -63,6 +63,16 @@ export default {
 
     draw_circle(){
       console.log('draw_circle');
+      
+      let circle = document.createElement("div");
+      circle.setAttribute("id", "circle")
+      circle.setAttribute("position", "absolute");
+      circle.setAttribute("z-index", "3");
+      circle.setAttribute("width", "200px");
+      circle.setAttribute("height", "200px");
+      circle.setAttribute("border-radius", "50%");
+      circle.setAttribute("background", "conic-gradient(green 0%,green 73% ,grey 73%,grey 100%)");
+      document.body.appendChild(circle);
     },
 
     get_half() {
@@ -209,4 +219,5 @@ export default {
   background-color: #f3f3f2;
   height: calc(100vw/3);
 }
+
 </style>
