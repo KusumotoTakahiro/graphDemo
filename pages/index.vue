@@ -2,7 +2,7 @@
   <div>
     half.x: {{half.x}}
     half.y: {{half.y}}
-    <v-card v-if="chart" class="likeDialog">
+    <v-card v-if="chart" class="dialog">
       <chart :chartData="chartData" :options="chartoptions"></chart>
       <v-btn @click="chart=!chart">close</v-btn>
     </v-card>
@@ -25,6 +25,7 @@ export default {
       data: 'hello world',
       a: 10,
       b: 10,
+      on_edge: false,
       chart: false,
       dialog: false,
       node1: null,
@@ -91,16 +92,6 @@ export default {
       return this.id;
     },
 
-    open_dialog() {
-      this.dialog = true;
-      
-    },
-
-    draw_circle(){
-      console.log('draw_circle');
-      this.add_node(this.half.x, this.half.y);
-    },
-
     get_half() {
       console.log('get_half')
       let node1 = this.cy.getElementById(this.node1).renderedPosition();
@@ -124,7 +115,8 @@ export default {
         vm.node2 = evt.target._private.data.target;
         //console.log(evt);
         vm.get_half();
-        vm.open_dialog();
+        vm.set_data();
+        vm.on_edge = true;
       })
     },
     init() {
@@ -238,6 +230,27 @@ export default {
       }
     });
     this.set_data();
+    // window.addEventListener('click', (e) => {
+    //   let flag = true;
+    //   if(e.target.closest('dialog')) {
+    //     console.log('on dialog');
+    //   } 
+    //   else {
+    //     if (this.chart&&this.on_edge&&flag===true) {
+    //       this.chart = false;
+    //       console.log('not on dialog, but on edge');
+    //     }
+    //     else if (!this.chart&&this.on_edge&&flag===true) {
+    //       //無視
+    //       console.log('not on dialog, and not on edge');
+    //       this.tap_edge();
+    //     }
+    //     else {
+    //       this.chart = false;
+    //       console.log('not on dialog');
+    //     }
+    //   }
+    // })
   }
 }
 </script>
@@ -247,7 +260,7 @@ export default {
   height: calc(100vw/3);
 }
 
-.likeDialog {
+.dialog {
   z-index: 5;
   position: fixed;
   inset: 0;
