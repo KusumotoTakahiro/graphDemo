@@ -1,32 +1,48 @@
 <template>
-  <row>
+  <div>
     half.x: {{half.x}}
     half.y: {{half.y}}
-    <v-btn @click="add_node">ノード追加</v-btn>
+    <v-card v-if="chart" class="likeDialog">
+      <chart :chartData="chartData" :options="chartoptions"></chart>
+      <v-btn @click="chart=!chart">close</v-btn>
+    </v-card>
+    <v-btn @click="set_data">データ変更</v-btn>
+    <v-btn @click="add_node(880,300)">ノード追加</v-btn>
     <v-btn @click="removeParentsOfOneChild">クリア</v-btn>
     <div id="cy"></div>
-  </row>
+  </div>
 </template>
 
 <script>
 import cytoscape from 'cytoscape';
+import chart from '~/components/chart.vue';
 
 export default {
   name: 'IndexPage',
+  components: {chart},
   data() {
     return {
       data: 'hello world',
+      a: 10,
+      b: 10,
+      chart: false,
+      dialog: false,
       node1: null,
       node2: null,
       half: {x:0, y:0},
       number: 2,
       id: 'b',
       removeEmptyParents : false, //demoサイトから引用
+      chartData: null,
+      chartoptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+      },
     }
   },
   methods: {
     //気分転換に追加
-    add_node() {
+    add_node(x, y) {
       let vm = this;
       //console.log(vm.autoId()); //autoId()は動作確認済み
       let id = vm.autoId();
@@ -36,14 +52,28 @@ export default {
           data : {
             id : id, 
           },
-          // position : {
-          //   x : 150 + Math.cos(this.theta)*this.k,
-          //   y : 150 + Math.sin(this.theta)*this.k,
-          // },
+          position : {
+            x : x,
+            y : y,
+          },
         }
       ]);
     },
-
+    set_data() {
+      console.log('set_data')
+      this.chart = !this.chart;
+      this.chartData = {
+        labels: ['January', 'February'],
+        datasets: [
+          {
+            label: 'Data One',
+            backgroundColor: ['#FF6384','#36A2EB'],
+            borderColor: 'transparent' ,
+            data: [Math.floor(Math.random() * (50 - 5 + 1)) + 5, 20]
+          }
+        ]
+      }
+    },
     autoId() {
       const alf = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
       //console.log(alf.length);
@@ -61,18 +91,14 @@ export default {
       return this.id;
     },
 
+    open_dialog() {
+      this.dialog = true;
+      
+    },
+
     draw_circle(){
       console.log('draw_circle');
-      
-      let circle = document.createElement("div");
-      circle.setAttribute("id", "circle")
-      circle.setAttribute("position", "absolute");
-      circle.setAttribute("z-index", "3");
-      circle.setAttribute("width", "200px");
-      circle.setAttribute("height", "200px");
-      circle.setAttribute("border-radius", "50%");
-      circle.setAttribute("background", "conic-gradient(green 0%,green 73% ,grey 73%,grey 100%)");
-      document.body.appendChild(circle);
+      this.add_node(this.half.x, this.half.y);
     },
 
     get_half() {
@@ -98,7 +124,7 @@ export default {
         vm.node2 = evt.target._private.data.target;
         //console.log(evt);
         vm.get_half();
-        vm.draw_circle();
+        vm.open_dialog();
       })
     },
     init() {
@@ -210,7 +236,8 @@ export default {
       if( vm.removeEmptyParents && vm.isParentOfOneChild(dropTarget) ){
         vm.removeParent(dropTarget);
       }
-    })
+    });
+    this.set_data();
   }
 }
 </script>
@@ -220,4 +247,12 @@ export default {
   height: calc(100vw/3);
 }
 
+.likeDialog {
+  z-index: 5;
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: 400px;
+  height: 400px;
+}
 </style>
