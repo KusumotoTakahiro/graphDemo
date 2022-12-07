@@ -7,9 +7,11 @@
       <v-btn @click="chart=!chart">close</v-btn>
     </v-card>
     <v-btn @click="set_data">データ変更</v-btn>
-    <v-btn @click="add_node(880,300)">ノード追加</v-btn>
+    <v-btn @click="add_node(880,300,speakers)">ノード追加</v-btn>
     <v-btn @click="removeParentsOfOneChild">クリア</v-btn>
+    <div style="background-color: aliceblue; height: 100%;; " id="area"></div>
     <div id="cy"></div>
+    
   </div>
 </template>
 
@@ -39,12 +41,36 @@ export default {
         responsive: true,
         maintainAspectRatio: false,
       },
+      speakers : [
+      "19704018",
+      "19704018",
+      "19704012",
+      "19704018",
+      "19704018",
+      "19704013",
+      "19704012",
+      "19704018",
+      "19704012",
+      "19704012",
+      "19704012",
+      "19704012",
+      "17233060",
+      "19704013",
+      "19704013",
+      "19704012",
+      "19704012",
+      "19704012",
+      "19704013",
+      "19704018"
+      ]
     }
   },
   methods: {
     //気分転換に追加
-    add_node(x, y) {
+    add_node(x, y, speakers) {
       let vm = this;
+      let result = vm.makeSVG(this.get_prop(speakers));
+      console.log(result)
       //console.log(vm.autoId()); //autoId()は動作確認済み
       let id = vm.autoId();
       this.cy.add([
@@ -57,8 +83,46 @@ export default {
             x : x,
             y : y,
           },
+          style : {
+            'background-image': result.svg,
+            'width': result.width,
+            'height' : result.height,
+          }
         }
       ]);
+    },
+    get_prop(speakers) {
+      let result = {}
+      for (let i = 0; i < speakers.length; i++) {
+        if (Object.keys(result).indexOf(speakers[i].toString()) !== -1) {
+          result[toString(speakers[i])] = 0;
+        }
+        else {
+          result[toString(speakers[i])] += 1;
+        }
+      }
+      return result;
+    },
+    makeSVG(speakers) {
+      //circle
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', 100);
+      circle.setAttribute('cy', 100);
+      circle.setAttribute('r', 80);
+      circle.setAttribute('fill', 'none');
+      circle.setAttribute('stroke', '#b22222');
+      circle.setAttribute('stroke-width', 5);
+      circle.setAttribute('stroke-dasharray', "none");//破線 10,10 etc
+      circle.setAttribute('opacity', 1);
+      circle.setAttribute('fill-opacity', 1);
+      circle.setAttribute('stroke-opacity', 1);
+      circle.setAttribute('transform', "rotate(0)");
+      let width = 50;
+      let height = 50;
+      const area = document.getElementById('area');
+      area.appendChild(circle);
+      console.log(circle)
+      return {circle, width, height}
     },
     set_data() {
       console.log('set_data')
@@ -229,7 +293,6 @@ export default {
         vm.removeParent(dropTarget);
       }
     });
-    this.set_data();
     // window.addEventListener('click', (e) => {
     //   let flag = true;
     //   if(e.target.closest('dialog')) {
