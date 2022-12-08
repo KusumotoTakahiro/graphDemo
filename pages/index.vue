@@ -62,15 +62,22 @@ export default {
       "19704012",
       "19704013",
       "19704018"
-      ]
+      ],
+      col_define: {
+        "19704018" : 'red',
+        "19704012" : 'blue',
+        "19704013" : 'green',
+        "17233060" : 'yellow',
+      }
     }
   },
   methods: {
     //気分転換に追加
     add_node(x, y, speakers) {
       let vm = this;
-      let result = vm.makeSVG(this.get_prop(speakers));
-      console.log(result)
+      //console.log(this.get_prop(speakers));
+      let result = vm.makeSVG(50, this.get_prop(speakers));
+      console.log(result.img);
       //console.log(vm.autoId()); //autoId()は動作確認済み
       let id = vm.autoId();
       this.cy.add([
@@ -84,7 +91,7 @@ export default {
             y : y,
           },
           style : {
-            'background-image': result.svg,
+            'background-image': result.img,
             'width': result.width,
             'height' : result.height,
           }
@@ -94,35 +101,52 @@ export default {
     get_prop(speakers) {
       let result = {}
       for (let i = 0; i < speakers.length; i++) {
-        if (Object.keys(result).indexOf(speakers[i].toString()) !== -1) {
-          result[toString(speakers[i])] = 0;
+        if (Object.keys(result).indexOf(speakers[i].toString()) === -1) {
+          //console.log('first ', speakers[i].toString());
+          result[speakers[i].toString()] = 0;
         }
         else {
-          result[toString(speakers[i])] += 1;
+          //console.log('second ', speakers[i].toString());
+          result[speakers[i].toString()] += 1;
         }
       }
       return result;
     },
-    makeSVG(speakers) {
+    //canvasの一辺の長さがlen, speakersはjsonから
+    makeSVG(len, speakers) {
       //circle
-      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', 100);
-      circle.setAttribute('cy', 100);
-      circle.setAttribute('r', 80);
-      circle.setAttribute('fill', 'none');
-      circle.setAttribute('stroke', '#b22222');
-      circle.setAttribute('stroke-width', 5);
-      circle.setAttribute('stroke-dasharray', "none");//破線 10,10 etc
-      circle.setAttribute('opacity', 1);
-      circle.setAttribute('fill-opacity', 1);
-      circle.setAttribute('stroke-opacity', 1);
-      circle.setAttribute('transform', "rotate(0)");
-      let width = 50;
-      let height = 50;
-      const area = document.getElementById('area');
-      area.appendChild(circle);
-      console.log(circle)
-      return {circle, width, height}
+      const img = document.createElement('canvas');
+      img.setAttribute('width', len);
+      img.setAttribute('height', len);
+      const context = img.getContext("2d");
+      let num = 0;
+      for (const value of Object.values(speakers)) {
+        num += Number(value);
+      }
+
+      let angle_now = 0, s_angle = 0, e_angle = 0;
+      for (const [key, value] of Object.entries(speakers)) {
+        console.log(key, value);
+        context.beginPath();
+        angle_now = (value / num) * 360;
+        s_angle = e_angle;
+        e_angle += angle_now * Math.PI /180;
+        context.arc(len/2, len/2, len/2, s_angle, e_angle, false);
+        context.lineTo(len/2, len/2);
+        context.fillStyle = this.col_define[key.toString()];
+        context.fill();
+      }
+
+      context.beginPath();
+      context.arc(len/2, len/2, len/3, 0, 2*Math.PI, false);
+      
+      context.fillStyle = 'blue'
+      context.fill();
+      context.strokeStyle = 'white';
+      context.lineWidth = 1;
+      context.stroke();
+
+      return {'img':img.toDataURL(), 'width':len, 'height':len}
     },
     set_data() {
       console.log('set_data')
